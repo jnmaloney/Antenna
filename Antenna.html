@@ -1,0 +1,192 @@
+<html>
+    <link rel="stylesheet" href="style.css">
+    
+<div style = "margin: 0px auto; width: 640px;">
+<canvas id="a" style="float:left" width="620" height="480"></canvas>
+<p class="legend left">
+    <a onclick="setBroadside(); return false;" href="#">Broadside Array</a>
+</p>
+<p class="legend right">
+    <a onclick="setNearView(); return false;" href="#">Near View</a>
+</p>
+<p class="clear"></p>
+<p class="legend left">
+    <a onclick="setEndfire(); return false;" href="#">Endfire Array</a>
+</p>
+<p class="legend right">
+    <a onclick="setFarView(); return false;" href="#">Far View</a>
+</p>
+<p class="clear"></p>
+<p class="legend left">
+    <a onclick="dec(); return false;" href="#">-</a>
+</p>
+<p id="n" class="legend left">8</p>
+<p class="legend left">
+    <a onclick="inc(); return false;" href="#">+</a>
+</p>
+</div>
+
+<script>
+
+  var width = 62;
+  var height = 48;
+  var s = width * height;
+  var a = new Array(s);
+  var phase = 0.0;
+  var nAntenna = 8;
+  var view = 0;
+
+  var drawFunction = frameBroadside;
+
+  var a_context = null;
+
+function start() {
+
+  var requestAnimationFrame = window.requestAnimationFrame || 
+                              window.mozRequestAnimationFrame || 
+                              window.webkitRequestAnimationFrame || 
+                              window.msRequestAnimationFrame;
+
+  var a_canvas = document.getElementById("a");
+  a_context = a_canvas.getContext("2d");
+  a_context.fillRect(50, 25, 150, 100);
+  
+  requestAnimationFrame(frame);
+
+
+}
+
+function frame() {
+
+  if (a_context == null) start();
+
+  phase += -0.16;
+
+  var separation = view ? 1 : 3;
+  var leftmost = 0.5 * width - 0.5 * separation * nAntenna;
+  
+  drawFunction();
+
+
+  // Overlay
+  for (var k = 0; k < nAntenna; k++) {
+      var x = leftmost + separation * k;
+      var y = 24;
+      a_context.fillStyle = "#fff";
+      radius = 4.0;
+      a_context.beginPath();
+      a_context.arc(5 + 10*x, 5 + 10*y, radius, 0, Math.PI * 2, false);
+      a_context.closePath();
+      a_context.fill();
+  }
+  
+  requestAnimationFrame(frame);
+}
+
+function frameBroadside() {
+    var separation = view ? 1 : 3;
+    var leftmost = 0.5 * width - 0.5 * separation * nAntenna;
+    for (var i = 0; i < width; i++) {
+        for (var j = 0; j < height; j++) {
+            
+            a[i + j * height] = 0;
+            
+            for (var k = 0; k < nAntenna; k++) {
+                var x = leftmost + separation * k;
+                var y = 24;
+                
+                var dx = x - i;
+                var dy = y - j;
+                var d = Math.sqrt(dx * dx + dy * dy);
+                
+                var w = 0.5 / separation;
+                var A = Math.sin(d * w + phase);
+                
+                a[i + j * height] += A;
+            } // k
+            
+            var A = a[i + j * height];
+            var rstyle = A > 0 ?  59 :   0; //208;
+            var gstyle = A > 0 ? 111 :  46; //243;
+            var bstyle = A > 0 ? 208 : 131;//  3;
+            
+            var rfill = 1.5 * A * A * rstyle / nAntenna / nAntenna;
+            var gfill = 1.5 * A * A * gstyle / nAntenna / nAntenna;
+            var bfill = 1.5 * A * A * bstyle / nAntenna / nAntenna;
+            
+            a_context.fillStyle = "rgba(" + parseInt(rfill) + "," + parseInt(gfill) + "," + parseInt(bfill) + ", 255)";
+            a_context.fillRect(i * 10 + 1, j * 10 + 1, i * 10 + 10, j * 10 + 10);
+        }
+    }
+}
+
+function frameEndfire() {
+    var separation = view ? 1 : 3;
+    var leftmost = 0.5 * width - 0.5 * separation * nAntenna;
+    for (var i = 0; i < width; i++) {
+        for (var j = 0; j < height; j++) {
+            
+            a[i + j * height] = 0;
+            
+            for (var k = 0; k < nAntenna; k++) {
+                var x = leftmost + separation * k;
+                var y = 24;
+                
+                var dx = x - i;
+                var dy = y - j;
+                var d = Math.sqrt(dx * dx + dy * dy);
+                
+                var w = 0.25 / separation;
+                var A = Math.sin(d * w + phase + k * Math.PI / 4.0);
+                
+                a[i + j * height] += A;
+            } // k
+            
+            
+            var A = a[i + j * height];
+            var rstyle = A > 0 ?  59 :   0; //208;
+            var gstyle = A > 0 ? 111 :  46; //243;
+            var bstyle = A > 0 ? 208 : 131;//  3;
+            
+            var rfill = 1.1 * A * A * rstyle / nAntenna;
+            var gfill = 1.1 * A * A * gstyle / nAntenna;
+            var bfill = 1.1 * A * A * bstyle / nAntenna;
+            
+            a_context.fillStyle = "rgba(" + parseInt(rfill) + "," + parseInt(gfill) + "," + parseInt(bfill) + ", 255)";
+            a_context.fillRect(i * 10 + 1, j * 10 + 1, i * 10 + 10, j * 10 + 10);
+            
+        }
+    }
+}
+
+function setBroadside() {
+    drawFunction = frameBroadside;
+}
+
+function setEndfire() {
+    drawFunction = frameEndfire;
+}
+
+function setNearView() {
+    view = 0;
+}
+
+function setFarView() {
+    view = 1;
+}
+
+function inc() {
+    nAntenna = (nAntenna == 8) ? 8 : nAntenna+1;
+    document.getElementById("n").innerHTML = nAntenna;
+}
+
+function dec() {
+    nAntenna = (nAntenna == 1) ? 1 : nAntenna-1;
+    document.getElementById("n").innerHTML = nAntenna;
+}
+
+window.onload=start;
+
+</script>
+
+</html>
