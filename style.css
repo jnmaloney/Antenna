@@ -80,6 +80,7 @@ a:link:hover, a:visited:hover {
   text-shadow: 0 0 1px #667;
   margin-left: 0.5em;
   vertical-align: top;
+  line-height: 0px;
 }
 
 .left {
@@ -100,4 +101,10 @@ a:link:hover, a:visited:hover {
 
 .clear {
     clear: both;
+    line-height: 0px;
+}
+
+.fixedwidth {
+    width: 1.5em;
+    align: center;
 }
